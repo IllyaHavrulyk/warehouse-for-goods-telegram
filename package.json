@@ -1,0 +1,29 @@
+{
+  "name": "warehouse-for-goods-telegram",
+  "version": "1.0.0",
+  "description": "Telegram bot for warehouse application.",
+  "main": "index.js",
+  "scripts": {
+    "start": "babel-node index --presets=env"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IllyaHavrulyk/warehouse-for-goods-telegram.git"
+  },
+  "keywords": [
+    "warehouse-for-goods"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/IllyaHavrulyk/warehouse-for-goods-telegram/issues"
+  },
+  "homepage": "https://github.com/IllyaHavrulyk/warehouse-for-goods-telegram#readme",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "config": "^3.3.3",
+    "node-telegram-bot-api": "^0.51.0"
+  }
+}
