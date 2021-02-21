@@ -5,6 +5,7 @@ import config from "config";
 const TOKEN = config.get("token");
 const bot = new TelegramBot(TOKEN, { polling: true })
 
+
 bot.on("message", message => {
     const { chat: { id } } = message;
     bot.sendMessage(id, "Init message");
