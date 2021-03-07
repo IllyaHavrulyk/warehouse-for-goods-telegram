@@ -10,7 +10,7 @@ const logo = "some logo";
 const PRODUCT_NAME_FIELD = "name";
 const PRODUCT_PRICE_FIELD = "price";
 const PRODUCT_QUANTITY_FIELD = "quantity";
-const PRODUCT_DESCRIPTION_FIELD = "name";
+const PRODUCT_DESCRIPTION_FIELD = "description";
 const PRODUCT_IMG_URL_FIELD = "imgUrl";
 const PRODUCT_DATE_ADDED_FIELD = "dateAdded";
 
@@ -19,6 +19,7 @@ const PRODUCT_DELETE_KEYBOARD = `Delete certain product. ${String.fromCodePoint(
 const PRODUCT_UPDATE_KEYBOARD = `Edit certain product. 	${String.fromCodePoint(0x270f)}`;
 const PRODUCT_CREATE_KEYBOARD = `Create product. ${String.fromCodePoint(0x2705)}`;
 const PRODUCT_GET_KEYBOARD = `Get some product. ${String.fromCodePoint(0x1f504)}`;
+const PRODUCT_STOP_EDITING_KEYBOARD = `Stop editing ${String.fromCodePoint(0x274c)}`;
 
 const keyboard = [
     [PRODUCT_GET_KEYBOARD],
@@ -27,7 +28,10 @@ const keyboard = [
     [`Home ${String.fromCodePoint(0x21aa)}`]
 ]
 
-const PRODUCT_UPDATE_COMMAND = "/edit";
+const editing_keyboard = [
+    [PRODUCT_STOP_EDITING_KEYBOARD],
+    [`Home ${String.fromCodePoint(0x21aa)}`]
+]
 
 const PRODUCT_GET_CALLBACK = "Get product by ID";
 const PRODUCT_DELETE_CALLBACK = "Delete product by ID";
@@ -47,6 +51,7 @@ bot.onText(/\/start/, message => {
 
 bot.onText(new RegExp(`${PRODUCT_LIST_KEYBOARD}(.*)`), message => {
     console.log(message);
+
     const { chat: { id } } = message;
     const message_text = message.text;
     switch (message_text) {
@@ -87,31 +92,25 @@ bot.onText(new RegExp(`${PRODUCT_LIST_KEYBOARD}(.*)`), message => {
     }
 })
 
-bot.onText(new RegExp(`${PRODUCT_UPDATE_COMMAND} (.*)`), (message, [source, match]) => {
-    console.log(JSON.parse(match));
-    const { chat: { id } } = message
-    bot.addListener("message", msg => {
-        console.log(msg);
-        bot.sendMessage(id, "message was sent by listener");
-        bot.removeAllListeners();
+bot.onText(new RegExp(`${PRODUCT_STOP_EDITING_KEYBOARD}(.*)`), message => {
+    const { chat: { id } } = message;
+    bot.removeListener("message");
+    bot.sendMessage(id, "You quit editing bot.", {
+        reply_markup: {
+            keyboard
+        }
     })
-
 })
-
-bot.on("document", query => {
-    console.log(query);
-})
-
-bot.onReplyToMessage()
 
 bot.on("callback_query", query => {
-    const { message: { chat: { id }, message_id, text } = {} } = query;
+    console.log("CALLBACK DATA --- \n", query);
+    const { message: { chat: { id } } } = query;
     console.log("QUERY --- ", query);
     console.log("Query Data", query.data);
-
     const action = query.data.split('-')[0];
     if (action === PRODUCT_GET_CALLBACK) {
         let entityId = query.data.split('-')[1];
+        console.log("ENTITY ID --- ")
         bot.sendMessage(id, "Here's the item you got.");
         axios.get(`${PATH}/get/${entityId}`).then(res => {
             const { data } = res;
@@ -141,6 +140,8 @@ bot.on("callback_query", query => {
                     ]
                 }
             })
+        }).catch(err => {
+            console.log(err);
         })
     } else if (action === PRODUCT_DELETE_CALLBACK) {
         const entityId = query.data.split('-')[1];
@@ -153,39 +154,63 @@ bot.on("callback_query", query => {
             console.log(err.stack);
         });
     } else if (action === PRODUCT_UPDATE_CALLBACK) {
-        const entityId = query.data.split('-')[1];
-        bot.sendMessage(id, "Enter field which you want to edit in the next format - fieldName:fieldValue");
+        const entityId = Number.parseInt(query.data.split('-')[1].trim());
+        console.log(`UPDATE ENTITY ID:${entityId}`);
+        let isEditing = true;
+        let updatedEntity = {
+            quantity: 321
+        };
+        bot.sendMessage(id, "Enter field which you want to edit in the next format - fieldName:fieldValue", {
+            reply_markup: {
+                keyboard: editing_keyboard
+            }
+        });
         bot.addListener("message", msg => {
             const [fieldName, fieldValue] = msg.text.split(":");
-            let updatedEntity = {
-                id: entityId,
-            }
+            console.log("FIELD NAME ---", fieldName);
             switch (fieldName) {
                 case PRODUCT_NAME_FIELD:
                     updatedEntity[fieldName] = fieldValue;
+                    bot.sendMessage(id, "Do you want to continue editing ? Type 'End' if you want to save edited values or if you don't, just keep typing properties and their values.");
                     break;
                 case PRODUCT_DESCRIPTION_FIELD:
                     updatedEntity[fieldName] = fieldValue;
+                    bot.sendMessage(id, "Do you want to continue editing ? Type 'End' if you want to save edited values or if you don't, just keep typing properties and their values.");
                     break;
                 case PRODUCT_IMG_URL_FIELD:
                     updatedEntity[fieldName] = fieldValue;
+                    bot.sendMessage(id, "Do you want to continue editing ? Type 'End' if you want to save edited values or if you don't, just keep typing properties and their values.");
                     break;
                 case PRODUCT_PRICE_FIELD:
                     updatedEntity[fieldName] = fieldValue;
+                    bot.sendMessage(id, "Do you want to continue editing ? Type 'End' if you want to save edited values or if you don't, just keep typing properties and their values.");
                     break;
-                case PRODUCT_NAME_FIELD:
+                case PRODUCT_QUANTITY_FIELD:
                     updatedEntity[fieldName] = fieldValue;
+                    bot.sendMessage(id, "Do you want to continue editing ? Type 'End' if you want to save edited values or if you don't, just keep typing properties and their values.");
                     break;
-                case PRODUCT_NAME_FIELD:
+                case PRODUCT_DATE_ADDED_FIELD:
                     updatedEntity[fieldName] = fieldValue;
+                    bot.sendMessage(id, "Do you want to continue editing ? Type 'End' if you want to save edited values or if you don't, just keep typing properties and their values.");
+                    break;
+                case "End":
+                    bot.sendMessage(id, "You've succesfully updated product.");
+                    bot.removeListener("message");
+                    axios.post(`${PATH}/update/${entityId}`, updatedEntity).then(res => {
+                        console.log("RES DATA --- ", res.data);
+                        console.log("RES STATUS --- ", res.status);
+                    });
+                    isEditing = false;
+                    break;
+                case `${PRODUCT_STOP_EDITING_KEYBOARD}`:
+                    break;
+                default:
+                    bot.sendMessage(id, "You've sent wrong , please enter valid field.");
                     break;
             }
-            bot.sendMessage(id, "Do you want to continue editing ?")
-        })
-        axios.get(`${PATH}/get/${id}`).then(res => {
-            bot.sendMessage(id, "Enter field which you want to edit in the next format - fieldName:fieldValue");
 
-        })
 
+            console.log("Object to update --- ", updatedEntity);
+        })
     }
 })
