@@ -16,14 +16,14 @@ const PRODUCT_DATE_ADDED_FIELD = "dateAdded";
 
 const PRODUCT_LIST_KEYBOARD = `List of products ${String.fromCodePoint(0x1f4f0)}`;
 const PRODUCT_DELETE_KEYBOARD = `Delete certain product. ${String.fromCodePoint(0x274c)}`;
-const PRODUCT_UPDATE_KEYBOARD = `Edit certain product. 	${String.fromCodePoint(0x270f)}`;
+const PRODUCT_EDIT_KEYBOARD = `Edit product ${String.fromCodePoint(0x1f4f0)}`;
 const PRODUCT_CREATE_KEYBOARD = `Create product. ${String.fromCodePoint(0x2705)}`;
 const PRODUCT_GET_KEYBOARD = `Get some product. ${String.fromCodePoint(0x1f504)}`;
 const PRODUCT_STOP_EDITING_KEYBOARD = `Stop editing ${String.fromCodePoint(0x274c)}`;
 
 const keyboard = [
     [PRODUCT_GET_KEYBOARD],
-    [PRODUCT_UPDATE_KEYBOARD, PRODUCT_CREATE_KEYBOARD, PRODUCT_DELETE_KEYBOARD],
+    [PRODUCT_EDIT_KEYBOARD, PRODUCT_CREATE_KEYBOARD, PRODUCT_DELETE_KEYBOARD],
     [PRODUCT_LIST_KEYBOARD],
     [`Home ${String.fromCodePoint(0x21aa)}`]
 ]
@@ -91,6 +91,144 @@ bot.onText(new RegExp(`${PRODUCT_LIST_KEYBOARD}(.*)`), message => {
             })
     }
 })
+
+bot.onText(new RegExp(`${PRODUCT_GET_KEYBOARD}(.*)`), message => {
+    console.log(message);
+
+    const { chat: { id } } = message;
+    const message_text = message.text;
+    bot.sendMessage(id, "Send id of product you want to get from database.");
+    switch (message_text) {
+        case PRODUCT_GET_KEYBOARD:
+            bot.addListener("message", message => {
+                const { text } = message;
+                const entityId = Number.parseInt(text);
+                bot.sendMessage(id, "Here's the item you got.");
+                axios.get(`${PATH}/get/${entityId}`).then(res => {
+                    const { data } = res;
+                    bot.sendPhoto(id, data.imgUrl, {
+                        parseMode: "Markup",
+                        caption: `${data.name}\n\n${data.description}\n\nDate added : ${data.dateAdded}\nQuantity : ${data.quantity}\nPrice : ${data.price}`,
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    {
+                                        text: `Get this product ${String.fromCodePoint(0x1f504)}`,
+                                        callback_data: `${PRODUCT_GET_CALLBACK}-${entityId}`
+                                    }
+                                ],
+                                [
+                                    {
+                                        text: `Edit this product ${String.fromCodePoint(0x270f)}`,
+                                        callback_data: `${PRODUCT_UPDATE_CALLBACK}-${entityId}}`
+                                    }
+                                ],
+                                [
+                                    {
+                                        text: `Delete this product ${String.fromCodePoint(0x274c)}`,
+                                        callback_data: `${PRODUCT_DELETE_CALLBACK}-${entityId}`
+                                    }
+                                ]
+                            ]
+                        }
+                    })
+                }).catch(err => {
+                    console.log(err);
+                })
+                bot.removeListener("message");
+            })
+    }
+})
+
+bot.onText(new RegExp(`${PRODUCT_DELETE_KEYBOARD}(.*)`), message => {
+    console.log(message);
+
+    const { chat: { id } } = message;
+    const message_text = message.text;
+    bot.sendMessage(id, "Send id of product you want to delete from database.");
+    switch (message_text) {
+        case PRODUCT_DELETE_KEYBOARD:
+            bot.addListener("message", message => {
+                const { text } = message;
+                const entityId = Number.parseInt(text);
+                axios.delete(`${PATH}/get/${entityId}`).catch(err => {
+                    console.log(err);
+                })
+                bot.sendMessage(id, "Product deleted");
+                bot.removeListener("message");
+            })
+    }
+})
+
+bot.onText(new RegExp(`${PRODUCT_EDIT_KEYBOARD}(.*)`), message => {
+    console.log(message);
+    const { chat: { id } } = message;
+    let entityId;
+    bot.sendMessage(id, "Enter id of product which you want to edit.");
+    entityId = Number.parseInt(message_text);
+    if (entityId !== undefined) {
+        bot.addListener("message", msg => {
+            bot.sendMessage(id, "Enter field which you want to edit in the next format - fieldName:fieldValue", {
+                reply_markup: {
+                    keyboard: editing_keyboard
+                }
+            });
+            const [fieldName, fieldValue] = msg.text.split(":");
+            console.log("FIELD NAME ---", fieldName);
+            switch (fieldName) {
+                case PRODUCT_NAME_FIELD:
+                    updatedEntity[fieldName] = fieldValue;
+                    bot.sendMessage(id, "Do you want to continue editing ? Type 'End' if you want to save edited values or if you don't, just keep typing properties and their values.");
+                    break;
+                case PRODUCT_DESCRIPTION_FIELD:
+                    updatedEntity[fieldName] = fieldValue;
+                    bot.sendMessage(id, "Do you want to continue editing ? Type 'End' if you want to save edited values or if you don't, just keep typing properties and their values.");
+                    break;
+                case PRODUCT_IMG_URL_FIELD:
+                    updatedEntity[fieldName] = fieldValue;
+                    bot.sendMessage(id, "Do you want to continue editing ? Type 'End' if you want to save edited values or if you don't, just keep typing properties and their values.");
+                    break;
+                case PRODUCT_PRICE_FIELD:
+                    updatedEntity[fieldName] = fieldValue;
+                    bot.sendMessage(id, "Do you want to continue editing ? Type 'End' if you want to save edited values or if you don't, just keep typing properties and their values.");
+                    break;
+                case PRODUCT_QUANTITY_FIELD:
+                    updatedEntity[fieldName] = fieldValue;
+                    bot.sendMessage(id, "Do you want to continue editing ? Type 'End' if you want to save edited values or if you don't, just keep typing properties and their values.");
+                    break;
+                case PRODUCT_DATE_ADDED_FIELD:
+                    updatedEntity[fieldName] = fieldValue;
+                    bot.sendMessage(id, "Do you want to continue editing ? Type 'End' if you want to save edited values or if you don't, just keep typing properties and their values.");
+                    break;
+                case "End":
+                    bot.sendMessage(id, "You've succesfully updated product.");
+                    bot.removeListener("message");
+                    axios.post(`${PATH}/update/${entityId}`, updatedEntity).then(res => {
+                        console.log("RES DATA --- ", res.data);
+                        console.log("RES STATUS --- ", res.status);
+                    });
+                    isEditing = false;
+                    break;
+                case `${PRODUCT_STOP_EDITING_KEYBOARD}`:
+                    break;
+                default:
+                    bot.sendMessage(id, "You've sent wrong , please enter valid field.");
+                    break;
+            }
+            console.log("Object to update --- ", updatedEntity);
+        })
+    }
+    console.log(entityId);
+    bot.removeListener("message");
+    let updatedEntity = {
+        quantity: 321
+    };
+
+    if (entityId) {
+
+    }
+})
+
 
 bot.onText(new RegExp(`${PRODUCT_STOP_EDITING_KEYBOARD}(.*)`), message => {
     const { chat: { id } } = message;
