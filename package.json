@@ -4,7 +4,7 @@
   "description": "Telegram bot for warehouse application.",
   "main": "index.js",
   "scripts": {
-    "start": "babel-node index --presets=env"
+    "start": "nodemon ./index.js localhost 5000"
   },
   "repository": {
     "type": "git",
@@ -24,6 +24,10 @@
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "config": "^3.3.3",
-    "node-telegram-bot-api": "^0.51.0"
+    "follow-redirects": "^1.13.3",
+    "node-fetch": "^2.6.1",
+    "node-telegram-bot-api": "^0.51.0",
+    "nodemon": "^2.0.7",
+    "request": "^2.88.2"
   }
 }
