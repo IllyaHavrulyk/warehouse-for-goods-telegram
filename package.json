@@ -28,10 +28,7 @@
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "config": "^3.3.3",
-    "follow-redirects": "^1.13.3",
-    "node-fetch": "^2.6.1",
     "node-telegram-bot-api": "^0.51.0",
-    "nodemon": "^2.0.7",
-    "request": "^2.88.2"
+    "nodemon": "^2.0.7"
   }
 }
