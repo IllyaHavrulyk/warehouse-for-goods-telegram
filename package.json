@@ -13,6 +13,9 @@
   "keywords": [
     "warehouse-for-goods"
   ],
+  "engines": {
+    "node": "12.18.3"
+  },
   "author": "",
   "license": "ISC",
   "bugs": {
