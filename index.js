@@ -40,7 +40,7 @@ bot.onText(/\/start/, async (message) => {
       console.log("REGISTRATION SUCCESFULL --- ", res.config.data);
       bot.sendMessage(
         id,
-        "Greetings, you have now activated bot for storing items. Now you can use it's functionality via keyboard.",
+        "Greetings, you have now activated bot for storing items. Now you can use it's functionality via keyboard." + `Your login is ${userToRegister.username} and password is ${userToRegister.password}`,
         {
           reply_markup: {
             keyboard,
