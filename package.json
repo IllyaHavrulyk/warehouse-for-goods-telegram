@@ -4,7 +4,8 @@
   "description": "Telegram bot for warehouse application.",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon ./index.js localhost 5000"
+    "start": "nodemon ./index.js localhost 5000",
+    "heroku-postbuild": "npm install && npm run build"
   },
   "repository": {
     "type": "git",
